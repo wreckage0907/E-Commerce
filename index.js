@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -14,7 +14,7 @@ async function connectToMongo() {
   try {
     await client.connect();
     console.log('Connected to MongoDB');
-    return client.db('ecommerce_analytics');
+    return client.db('E_commerce');
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
     process.exit(1);
@@ -26,33 +26,161 @@ let db;
 // Initialize database connection
 connectToMongo().then((database) => {
   db = database;
-  
-  // Create indexes
   db.collection('products').createIndex({ name: 'text', description: 'text' });
-  db.collection('orders').createIndex({ date: 1 });
-  db.collection('orders').createIndex({ 'customer.location': '2dsphere' });
+  db.collection('customers').createIndex({ date: 1 });
+  db.collection('customers').createIndex({ 'location': '2dsphere' });
 });
 
-
 app.get('/', (req, res) => {
-    res.send('Hello World!');
-    });
-// Record a new order
-app.post('/orders', async (req, res) => {
+  res.send('Hello World!');
+});
+
+// CRUD operations for customers
+
+app.post('/customers', async (req, res) => {
   try {
-    const result = await db.collection('orders').insertOne(req.body);
+    const { name } = req.body;
+    const existingCustomer = await db.collection('customers').findOne({ name });
+    if (existingCustomer) {
+      return res.status(400).json({ error: 'Customer with this name already exists' });
+    }
+    const result = await db.collection('customers').insertOne(req.body);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-// Get top selling products
+app.get('/customers', async (req, res) => {
+  try {
+    const customers = await db.collection('customers').find().toArray();
+    res.json(customers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/customers/:name', async (req, res) => {
+  try {
+    const customer = await db.collection('customers').findOne({ name: req.params.name });
+    if (customer) {
+      res.json(customer);
+    } else {
+      res.status(404).json({ message: 'Customer not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/customers/:name', async (req, res) => {
+  try {
+    const result = await db.collection('customers').updateOne(
+      { name: req.params.name },
+      { $set: req.body }
+    );
+    if (result.matchedCount > 0) {
+      res.json({ message: 'Customer updated successfully' });
+    } else {
+      res.status(404).json({ message: 'Customer not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/customers/:name', async (req, res) => {
+  try {
+    const result = await db.collection('customers').deleteOne({ name: req.params.name });
+    if (result.deletedCount > 0) {
+      res.json({ message: 'Customer deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Customer not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// CRUD operations for products
+
+app.post('/products', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const existingProduct = await db.collection('products').findOne({ name });
+    if (existingProduct) {
+      return res.status(400).json({ error: 'Product with this name already exists' });
+    }
+    const result = await db.collection('products').insertOne(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+app.get('/products', async (req, res) => {
+  try {
+    const products = await db.collection('products').find().toArray();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.get('/products/:name', async (req, res) => {
+  try {
+    const product = await db.collection('products').findOne({ name: req.params.name });
+    if (product) {
+      res.json(product);
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.put('/products/:name', async (req, res) => {
+  try {
+    const result = await db.collection('products').updateOne(
+      { name: req.params.name },
+      { $set: req.body }
+    );
+    if (result.matchedCount > 0) {
+      res.json({ message: 'Product updated successfully' });
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.delete('/products/:name', async (req, res) => {
+  try {
+    const result = await db.collection('products').deleteOne({ name: req.params.name });
+    if (result.deletedCount > 0) {
+      res.json({ message: 'Product deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// ANALYSIS ENDPOINTS
+
 app.get('/analytics/top-products', async (req, res) => {
   try {
-    const topProducts = await db.collection('orders').aggregate([
+    const topProducts = await db.collection('customers').aggregate([
       { $unwind: '$products' },
-      { $group: { _id: '$products.id', totalSold: { $sum: '$products.quantity' } } },
+      { $group: { _id: '$products.name', totalSold: { $sum: '$products.quantity' } } },
       { $sort: { totalSold: -1 } },
       { $limit: 5 }
     ]).toArray();
@@ -62,25 +190,10 @@ app.get('/analytics/top-products', async (req, res) => {
   }
 });
 
-// Search products
-app.get('/products/search', async (req, res) => {
-  try {
-    const { query } = req.query;
-    const products = await db.collection('products').find(
-      { $text: { $search: query } },
-      { score: { $meta: 'textScore' } }
-    ).sort({ score: { $meta: 'textScore' } }).toArray();
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get sales by date range
 app.get('/analytics/sales', async (req, res) => {
   try {
     const { start, end } = req.query;
-    const sales = await db.collection('orders').aggregate([
+    const sales = await db.collection('customers').aggregate([
       { $match: { date: { $gte: new Date(start), $lte: new Date(end) } } },
       { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } }, totalSales: { $sum: '$total' } } },
       { $sort: { _id: 1 } }
@@ -91,12 +204,11 @@ app.get('/analytics/sales', async (req, res) => {
   }
 });
 
-// Find nearby orders
-app.get('/orders/nearby', async (req, res) => {
+app.get('/customers/nearby', async (req, res) => {
   try {
     const { longitude, latitude, maxDistance } = req.query;
-    const nearbyOrders = await db.collection('orders').find({
-      'customer.location': {
+    const nearbyCustomers = await db.collection('customers').find({
+      'location': {
         $near: {
           $geometry: {
             type: 'Point',
@@ -106,7 +218,7 @@ app.get('/orders/nearby', async (req, res) => {
         }
       }
     }).toArray();
-    res.json(nearbyOrders);
+    res.json(nearbyCustomers);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
