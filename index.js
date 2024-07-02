@@ -351,6 +351,53 @@ app.delete("/customers/:name", async (req, res) => {
 
 // CRUD operations for products
 
+/**
+ * @swagger
+ * /products:
+ *   post:
+ *     summary: Create a new product
+ *     tags: [Basic CRUD]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       201:
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 acknowledged:
+ *                   type: boolean
+ *                   example: true
+ *                 insertedId:
+ *                   type: string
+ *                   example: 60f7a1a2a1a2a1a2a1a2a1a2
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Product with this name already exists
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 app.post("/products", async (req, res) => {
   try {
     const { name } = req.body;
@@ -363,10 +410,36 @@ app.post("/products", async (req, res) => {
     const result = await db.collection("products").insertOne(req.body);
     res.status(201).json(result);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
+/**
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: Gets all products
+ *     tags: [Basic CRUD]
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 app.get("/products", async (req, res) => {
   try {
     const products = await db.collection("products").find().toArray();
@@ -376,6 +449,47 @@ app.get("/products", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /products/{name}:
+ *   get:
+ *     summary: Gets a product by name
+ *     tags: [Basic CRUD]
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the product to retrieve
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 app.get("/products/:name", async (req, res) => {
   try {
     const product = await db
@@ -391,6 +505,57 @@ app.get("/products/:name", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /products/{name}:
+ *   put:
+ *     summary: Updates a product by name
+ *     tags: [Basic CRUD]
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the product to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product updated successfully
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 app.put("/products/:name", async (req, res) => {
   try {
     const result = await db
@@ -406,6 +571,51 @@ app.put("/products/:name", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /products/{name}:
+ *   delete:
+ *     summary: Deletes a product by name
+ *     tags: [Basic CRUD]
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the product to delete
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product deleted successfully
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Product not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 app.delete("/products/:name", async (req, res) => {
   try {
     const result = await db
@@ -421,8 +631,47 @@ app.delete("/products/:name", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * tags:
+ *   name: Analysis
+ *   description: Endpoints for analytics
+ */
 // ANALYSIS ENDPOINTS
 
+/**
+ * @swagger
+ * /analytics/top-products:
+ *   get:
+ *     summary: Get top 5 products by quantity sold
+ *     tags: [Analysis]
+ *     responses:
+ *       200:
+ *         description: A list of top 5 products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: Smartphone X
+ *                   totalSold:
+ *                     type: integer
+ *                     example: 150
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 app.get("/analytics/top-products", async (req, res) => {
   try {
     const topProducts = await db
@@ -445,6 +694,55 @@ app.get("/analytics/top-products", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /analytics/sales:
+ *   get:
+ *     summary: Get total sales between two dates
+ *     tags: [Analysis]
+ *     parameters:
+ *       - in: query
+ *         name: start
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date in YYYY-MM-DD format
+ *         required: true
+ *       - in: query
+ *         name: end
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date in YYYY-MM-DD format
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: A list of total sales grouped by date
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 2023-07-01
+ *                   totalSales:
+ *                     type: number
+ *                     format: double
+ *                     example: 999.99
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
 app.get("/analytics/sales", async (req, res) => {
   try {
     const { start, end } = req.query;
@@ -466,25 +764,79 @@ app.get("/analytics/sales", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-app.get("/customers/nearby", async (req, res) => {
+/**
+ * @swagger
+ * /analytics/product-sales:
+ *   get:
+ *     summary: Get total sales of a specific product over time
+ *     tags: [Analysis]
+ *     parameters:
+ *       - in: query
+ *         name: productName
+ *         schema:
+ *           type: string
+ *         description: Name of the product
+ *         required: true
+ *       - in: query
+ *         name: start
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date in YYYY-MM-DD format
+ *         required: true
+ *       - in: query
+ *         name: end
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date in YYYY-MM-DD format
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: A list of total sales for the specified product grouped by date
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 2023-07-01
+ *                   totalSales:
+ *                     type: number
+ *                     format: double
+ *                     example: 1999.98
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
+app.get("/analytics/product-sales", async (req, res) => {
   try {
-    const { longitude, latitude, maxDistance } = req.query;
-    const nearbyCustomers = await db
+    const { productName, start, end } = req.query;
+    const sales = await db
       .collection("customers")
-      .find({
-        location: {
-          $near: {
-            $geometry: {
-              type: "Point",
-              coordinates: [parseFloat(longitude), parseFloat(latitude)],
-            },
-            $maxDistance: parseInt(maxDistance),
+      .aggregate([
+        { $unwind: "$products" },
+        { $match: { "products.name": productName, date: { $gte: new Date(start), $lte: new Date(end) } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+            totalSales: { $sum: { $multiply: ["$products.quantity", "$products.price"] } },
           },
         },
-      })
+        { $sort: { _id: 1 } },
+      ])
       .toArray();
-    res.json(nearbyCustomers);
+    res.json(sales);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
