@@ -257,16 +257,6 @@ app.post('/auth/login', async (req, res) => {
  *                 insertedId:
  *                   type: string
  *                   example: 60f7a1a2a1a2a1a2a1a2a1a2
- *       400:
- *         description: Bad request
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Customer with this name already exists
  *       500:
  *         description: Internal server error
  *         content:
@@ -281,12 +271,6 @@ app.post('/auth/login', async (req, res) => {
 app.post("/customers", async (req, res) => {
   try {
     const { name } = req.body;
-    const existingCustomer = await db.collection("customers").findOne({ name });
-    if (existingCustomer) {
-      return res
-        .status(400)
-        .json({ error: "Customer with this name already exists" });
-    }
     const result = await db.collection("customers").insertOne(req.body);
     res.status(201).json(result);
   } catch (error) {
@@ -333,8 +317,8 @@ app.get("/customers", async (req, res) => {
 /**
  * @swagger
  * /customers/{name}:
- *   get:
- *     summary: Gets a customer by name
+ *   put:
+ *     summary: Updates a customer by name
  *     tags: [Basic CRUD]
  *     parameters:
  *       - in: path
@@ -342,14 +326,24 @@ app.get("/customers", async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: Name of the customer to retrieve
+ *         description: Name of the customer to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Customer'
  *     responses:
  *       200:
- *         description: Success
+ *         description: Customer updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Customer'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Customer updated successfully
  *       404:
  *         description: Customer not found
  *         content:
@@ -386,6 +380,7 @@ app.put("/customers/:name", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 /**
  * @swagger
