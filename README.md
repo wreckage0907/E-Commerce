@@ -15,8 +15,8 @@ The E-commerce Analysis System aims to provide a backend solution for managing a
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/ecommerce-analysis-system.git
-   cd ecommerce-analysis-system
+   git clone https://github.com/wreckage0907/E-Commerce.git
+   cd E-Commerce
    ```
 
 2. Install dependencies:
