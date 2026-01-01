@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt');
 const app = express();
 const port = 3000;
 
-const uri = "mongodb://localhost:27017";
+const uri = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const client = new MongoClient(uri);
 app.use(bodyParser.json());
 
